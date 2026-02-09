@@ -130,3 +130,54 @@ CMsgPacker Msg(NETMSG_FOXNET_FASTINPUTS, true);
 Msg.AddInt(g_Config.m_TcFastInput);
 SendMsg(Conn, &Msg, MSGFLAG_VITAL);
 ```
+
+## game-data-prediction@netobj.teeworlds.wiki
+
+**TYPE**: Snapshot net object
+
+**UUID domain**: ``game-data-prediction@netobj.teeworlds.wiki``
+
+**UUID raw**: ``c71bec48-83fa-3524-8145-686016f13009``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Prediction Flag | A flag for server to disable some part of client prediction |
+
+**IMPLEMENTATIONS**:
+| Project | Details |
+| ------- | ------- |
+| [TeeworldsArchive](https://github.com/TeeworldsArchive/teeworlds) | Client-side local player event and input prediction could be disabled by server-side |
+
+**DESCRIPTION**:
+
+missing `GAMEPREDICTIONFLAG_EVENT` should only disable the prediction of local player's trigger events.
+
+missing `GAMEPREDICTIONFLAG_INPUT` should disable the prediction of local player's trigger events and the prediction of local player input.
+
+maybe you would ask why missing `GAMEPREDICTIONFLAG_INPUT` should disable the prediction of local player's trigger events, if we don't do that, then we couldn't get any trigger events of local player.
+
+**EXAMPLE**:
+```python
+# datasrc/network.py
+GamePredictionFlags = Flags("GAMEPREDICTIONFLAG", ["EVENT", "INPUT"])
+
+Objects = [
+    # [..]
+    NetObjectEx("GameDataPrediction", "game-data-prediction@netobj.teeworlds.wiki", [
+            NetFlag("m_PredictionFlags", GamePredictionFlags),
+    ])
+]
+```
+
+```C++
+// this is the server side
+CNetObj_GameDataPrediction *pGameDataPrediction = static_cast<CNetObj_GameDataPrediction *>(Server()->SnapNewItem(NETOBJTYPE_GAMEDATAPREDICTION, 0, sizeof(CNetObj_GameDataPrediction)));
+if(!pGameDataPrediction)
+	return;
+
+pGameDataPrediction->m_PredictionFlags = GAMEPREDICTIONFLAG_EVENT | GAMEPREDICTIONFLAG_INPUT;
+
+// As the client side is somewhat fragmented, please see https://github.com/TeeworldsArchive/teeworlds/pull/40
+```
