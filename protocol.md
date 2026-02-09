@@ -88,3 +88,45 @@ CMsgPacker Msg(NETMSG_KZ_KAIZO_NETWORK_VERSION, true);
 Msg.AddInt(KAIZO_NETWORK_VERSION_LATEST);
 SendMsg(Conn, &Msg, MSGFLAG_VITAL);
 ```
+
+## cl-foxnet-fastinputs@foxnet-ddnet.github.io
+
+**SENDER**: Client
+
+**MESSAGE TYPE**: System message
+
+**UUID domain**: ``cl-foxnet-fastinputs@foxnet-ddnet.github.io``
+
+**UUID raw**: ``0031f379-9071-3694-8b35-cf402fba3292``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Fast Inputs Enabled | Value indicating if Fast Inputs is enabled on this client |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [FoxNet](https://github.com/FoxNet-DDNet/FoxNet) | Improves prediction for Fast Inputs if received with a True value |
+| [Entity Client](https://github.com/FoxNet-DDNet/Entity-Client-DDNet/) | Sends this message if FoxNet info message is received |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message if FoxNet info message is received |
+
+**DESCRIPTION**:
+
+Indicates if the client has Fast Inputs enabled, allows the server to give improved prediction info for the client.
+
+**EXAMPLE**:
+
+```C++
+// src/engine/shared/protocol_ex_msgs.h
+UUID(NETMSG_FOXNET_FASTINPUTS, "cl-foxnet-fastinputs@foxnet-ddnet.github.io")
+```
+
+```C++
+// send on the client side
+CMsgPacker Msg(NETMSG_FOXNET_FASTINPUTS, true);
+Msg.AddInt(g_Config.m_TcFastInput);
+SendMsg(Conn, &Msg, MSGFLAG_VITAL);
+```
