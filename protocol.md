@@ -1,0 +1,49 @@
+## kaizocrown@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game message
+
+**UUID domain**: ``kaizocrown@m0rekz.github.io``
+
+**UUID raw**: ``c4348e4a-18c3-3bc8-89db-8e0283e90b48``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | ClientId | A player client id that has a crown |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends the crown for the player with the best time between all players online in the server, requires a NetMessage to be received indicating that the client has support for the message, so the server can send the crown |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a blue crown above indicated player character |
+
+**DESCRIPTION**:
+
+The server sends a crown each certain amount of ticks, indicating the player that is porting it.
+While the client get the message, it should render a crown above the indicated player, if the message is not received in SERVER_TICK_SPEED ticks, the crown must be removed.
+
+**EXAMPLE**:
+
+```python
+# datasrc/network.py
+Messages = [
+    # [..]
+    	NetMessageEx("Sv_KaizoNetworkCrown", "kaizocrown@m0rekz.github.io", [
+        NetIntAny("m_ClientId"),
+      ]),
+]
+```
+
+```C++
+// send on the server side
+if(Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every tick
+{
+  CNetMsg_Sv_KaizoNetworkCrown CrownMsg;
+  CrownMsg.m_ClientId = m_pPlayer->GetCid();
+  Server()->SendPackMsg(&CrownMsg, MSGFLAG_VITAL, SnappingClient);
+}
+```
