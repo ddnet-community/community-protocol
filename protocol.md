@@ -47,3 +47,44 @@ if(Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every t
   Server()->SendPackMsg(&CrownMsg, MSGFLAG_VITAL, SnappingClient);
 }
 ```
+
+## kaizoversion@m0rekz.github.io
+
+**SENDER**: Client
+
+**MESSAGE TYPE**: System message
+
+**UUID domain**: ``kaizoversion@m0rekz.github.io``
+
+**UUID raw**: ``13d20a78-22fa-3d24-9882-91924665b4c9``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Kaizo Network protocol version | Supported Kaizo Network protocol version |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network needs this message to know they can send any other Kaizo-only message |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message |
+
+**DESCRIPTION**:
+
+This message indicates the supported Kaizo Network protocol version (see [version_kz.h in Kaizo Client](https://github.com/M0REKZ/kaizo-client/blob/client/src/game/version_kz.h)), it is required to be sent in Kaizo Network servers to be able to receive Kaizo-only messages.
+
+**EXAMPLE**:
+
+```C++
+// src/engine/shared/protocol_ex_msgs.h
+UUID(NETMSG_KZ_KAIZO_NETWORK_VERSION, "kaizoversion@m0rekz.github.io")
+```
+
+```C++
+// send on the client side
+CMsgPacker Msg(NETMSG_KZ_KAIZO_NETWORK_VERSION, true);
+Msg.AddInt(KAIZO_NETWORK_VERSION_LATEST);
+SendMsg(Conn, &Msg, MSGFLAG_VITAL);
+```
