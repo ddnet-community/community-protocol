@@ -181,3 +181,62 @@ pGameDataPrediction->m_PredictionFlags = GAMEPREDICTIONFLAG_EVENT | GAMEPREDICTI
 
 // As the client side is somewhat fragmented, please see https://github.com/TeeworldsArchive/teeworlds/pull/40
 ```
+
+## kaizoplayerping@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizoplayerping@m0rekz.github.io``
+
+**UUID raw**: ``---``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Ping | The Player's Ping, use the default NetObject m_Id to indicate Player Client ID|
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends this message, requires a NetMessage to be received indicating that the client has support for the message, so the server can send the crown |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a ping circle above indicated player character |
+
+**DESCRIPTION**:
+
+The server calculates ping and sends the snap object to all clients, implementing this Snap Object in new server mods is not recommended, since it uses space in the game Snapshot while this could had been implemented as a NetMessage.
+
+**EXAMPLE**:
+
+```python
+# datasrc/network.py
+Objects = [
+    # [..]
+    	NetObjectEx("KaizoNetworkPlayerPing", "kaizoplayerping@m0rekz.github.io", [
+		NetIntAny("m_Ping", default=0),
+	], validate_size=False),
+]
+```
+
+```C++
+// send on the server side
+// Kaizo Network server uses LastAckedTick to calculate ping
+// but you may want to use a different way
+// also make sure to verify if the client supports the snap object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PLAYER_PING && m_LastAckedTick != -1)
+	{
+		CNetObj_KaizoNetworkPlayerPing *pKaizoPlayerPing = Server()->SnapNewItem<CNetObj_KaizoNetworkPlayerPing>(Id);
+		if(!pKaizoPlayerPing)
+			return;
+
+		int diff = Server()->Tick() - m_LastAckedTick;
+
+		if(diff > 50)
+			diff = 50;
+
+		pKaizoPlayerPing->m_Ping = (int)(diff * 1000/Server()->TickSpeed());
+	}
+```
