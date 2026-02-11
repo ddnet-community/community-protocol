@@ -18,7 +18,7 @@
 
 | Project | Details |
 | ------- | ------- |
-| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends the crown for the player with the best time between all players online in the server, requires a NetMessage to be received indicating that the client has support for the message, so the server can send the crown |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends the crown for the player with the best time between all players online in the server, requires kaizoversion@m0rekz.github.io to be received indicating that the client has support for the message, so the server can send the crown |
 | [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a blue crown above indicated player character |
 
 **DESCRIPTION**:
@@ -40,7 +40,8 @@ Messages = [
 
 ```C++
 // send on the server side
-if(Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every tick
+// make sure the client supports the message
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_CROWNS && Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every tick
 {
   CNetMsg_Sv_KaizoNetworkCrown CrownMsg;
   CrownMsg.m_ClientId = m_pPlayer->GetCid();
@@ -68,7 +69,7 @@ if(Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every t
 
 | Project | Details |
 | ------- | ------- |
-| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network needs this message to know they can send any other Kaizo-only message |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network needs this message to know it can send any other Kaizo-only message |
 | [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message |
 
 **DESCRIPTION**:
@@ -111,7 +112,7 @@ SendMsg(Conn, &Msg, MSGFLAG_VITAL);
 | ------- | ------- |
 | [FoxNet](https://github.com/FoxNet-DDNet/FoxNet) | Improves prediction for Fast Inputs if received with a True value |
 | [Entity Client](https://github.com/FoxNet-DDNet/Entity-Client-DDNet/) | Sends this message if FoxNet info message is received |
-| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message if FoxNet info message is received |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message |
 
 **DESCRIPTION**:
 
@@ -196,13 +197,13 @@ pGameDataPrediction->m_PredictionFlags = GAMEPREDICTIONFLAG_EVENT | GAMEPREDICTI
 
 | Type | Name | Description |
 | ---- | ---- | ----------- |
-| Int | Ping | The Player's Ping, use the default NetObject m_Id to indicate Player Client ID|
+| Int | Ping | The Player's Ping, Client ID must be indicated at the Snap Object construction as indicated in the example below|
 
 **IMPLEMENTATIONS**:
 
 | Project | Details |
 | ------- | ------- |
-| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends this message, requires a NetMessage to be received indicating that the client has support for the message, so the server can send the crown |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends this message, requires kaizoversion@m0rekz.github.io to be received indicating that the client has support for the message, so the server can send the object |
 | [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a ping circle above indicated player character |
 
 **DESCRIPTION**:
@@ -239,4 +240,20 @@ if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PLA
 
 		pKaizoPlayerPing->m_Ping = (int)(diff * 1000/Server()->TickSpeed());
 	}
+```
+
+```C++
+// read on the client side
+if(pItem->m_Type == NETOBJTYPE_KAIZONETWORKPLAYERPING)
+    {
+        const CNetObj_KaizoNetworkPlayerPing *pKaizoPlayerPing = (const CNetObj_KaizoNetworkPlayerPing *)pItem->m_pData;
+        if(!pKaizoPlayerPing)
+            return;
+        
+        int ClientId = pItem->m_Id;
+        if(ClientId < 0 || ClientId >= MAX_CLIENTS)
+            return;
+
+        m_aClients[ClientId].m_ReceivedPing = pKaizoPlayerPing->m_Ping;
+    }
 ```
