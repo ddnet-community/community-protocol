@@ -404,3 +404,130 @@ if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_POR
 		pKaizoNetworkCharacter->m_RealCurrentWeapon = m_KaizoNetworkChar.m_RealCurrentWeapon;
 	}
 ```
+
+## kaizoturret@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizoturret@m0rekz.github.io``
+
+**UUID raw**: ``76d92b8e-250b-3600-83d6-d68f5e9bd9c4``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | X | X Position |
+| Int | Y | Y Position |
+| Int | Type | 0 is a Normal Turret, 1 = is a Explosive Turret |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if a damage turret is found on the map, if kaizoversion@m0rekz.github.io has NOT been received it will send a normal laser with type WEAPON_LASER as replacement |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a yellow or red "turret" for the normal and explosive turret respectively |
+
+**DESCRIPTION**:
+
+A Kaizo damage turret entity, found in the map. Object indicates its position and type.
+
+Use this object in your client if you want to display a custom texture for the turrets or have better prediction in Kaizo-based servers (like TeeCloud).
+
+Implementation is similar to kaizomine@m0rekz.github.io
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkTurret", "kaizoturret@m0rekz.github.io", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntRange("m_Type", 0, 'max_int'),
+	]),
+]
+```
+
+```C++
+// send on the server side
+// also make sure to verify if client supports the network object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_TURRETS)
+	{
+		CNetObj_KaizoNetworkTurret *pTurret = static_cast<CNetObj_KaizoNetworkTurret *>(
+			Server()->SnapNewItem(NETOBJTYPE_KAIZONETWORKTURRET, GetId(), sizeof(CNetObj_KaizoNetworkTurret)));
+		if(!pTurret)
+			return;
+
+		pTurret->m_X = (int)m_Pos.x;
+		pTurret->m_Y = (int)m_Pos.y;
+		pTurret->m_Type = (m_Explosive ? 1 : 0);
+	}
+```
+
+## kaizomine@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizomine@m0rekz.github.io``
+
+**UUID raw**: ``701a6e2b-05a1-3181-bef9-f05973a6454c``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | X | X Position |
+| Int | Y | Y Position |
+| Int | Type | Mine type, unused |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if a mine is found on the map, if kaizoversion@m0rekz.github.io has NOT been received it will send a WEAPON_LASER projectile |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a mine in the indicated position |
+
+**DESCRIPTION**:
+
+A Kaizo Mine entity, found in the map. Object indicates its position and type, but type is unused.
+
+Use this object in your client if you want to display a custom texture for the mines or have better prediction in Kaizo-based servers (like TeeCloud).
+
+Implementation is similar to kaizoturret@m0rekz.github.io
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkMine", "kaizomine@m0rekz.github.io", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntRange("m_Type", 0, 'max_int'),
+	]),
+]
+```
+
+```C++
+// send on the server side
+// also make sure to verify if client supports the network object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_TURRETS)
+	{
+		CNetObj_KaizoNetworkMine *pMine = static_cast<CNetObj_KaizoNetworkMine *>(
+			Server()->SnapNewItem(NETOBJTYPE_KAIZONETWORKMINE, GetId(), sizeof(CNetObj_KaizoNetworkMine)));
+		if(!pMine)
+			return;
+
+		pMine->m_X = (int)m_Pos.x;
+		pMine->m_Y = (int)m_Pos.y;
+		pMine->m_Type = 0;
+	}
+```
+
