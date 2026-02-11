@@ -257,3 +257,68 @@ if(pItem->m_Type == NETOBJTYPE_KAIZONETWORKPLAYERPING)
         m_aClients[ClientId].m_ReceivedPing = pKaizoPlayerPing->m_Ping;
     }
 ```
+
+## kaizopickup@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizopickup@m0rekz.github.io``
+
+**UUID raw**: ``5c3b5a2a-f8a1-3347-baf9-8bda6fd31833``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | X | X Position |
+| Int | Y | Y Position |
+| Int | Type | Kaizo Network Weapon ID |
+| Int | Switch | Switch Number |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if a Kaizo weapon is found on the map, if kaizoversion@m0rekz.github.io has not been received it will send a normal weapon object with a decoration (like a rotating laser) |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | If the Weapon ID is a Kaizo weapon, it will render the corresponding texture |
+
+**DESCRIPTION**:
+
+This object has information for the Kaizo weapon pickup found in the map, telling the position, type and switch ID for it.
+
+``validate_size=False`` was added in case a future Kaizo Network version would add new information, but the original server mod is discontinued.
+Use this object in your client if you want to display a custom texture for weapons in Kaizo-based servers (like TeeCloud).
+
+Supported weapon IDs:
+* KZ_CUSTOM_WEAPON_PORTAL_GUN = 6 (NUM_WEAPONS)
+* KZ_CUSTOM_WEAPON_ATTRACTOR_BEAM = 7
+
+**EXAMPLE**:
+
+```C++
+// datasrc/network.py
+NetObjectEx("KaizoNetworkPickup", "kaizopickup@m0rekz.github.io", [
+		NetIntAny("m_X", default=0),
+        NetIntAny("m_Y", default=0),
+        NetIntAny("m_Type", default=0),
+        NetIntAny("m_Switch", default=0),
+	], validate_size=False),
+```
+
+```C++
+// send on the server side
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PORTAL_ATTRACTOR)
+{
+	CNetObj_KaizoNetworkPickup *pPickup = Server()->SnapNewItem<CNetObj_KaizoNetworkPickup>(GetId());
+
+	if(!pPickup)
+		return;
+
+	pPickup->m_X = (int)m_Pos.x;
+	pPickup->m_Y = (int)m_Pos.y;
+	pPickup->m_Type = m_Subtype;
+	pPickup->m_Switch = m_Number;
+}
+```
