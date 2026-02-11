@@ -297,14 +297,17 @@ Supported weapon IDs:
 
 **EXAMPLE**:
 
-```C++
-// datasrc/network.py
-NetObjectEx("KaizoNetworkPickup", "kaizopickup@m0rekz.github.io", [
+```Python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkPickup", "kaizopickup@m0rekz.github.io", [
 		NetIntAny("m_X", default=0),
         NetIntAny("m_Y", default=0),
         NetIntAny("m_Type", default=0),
         NetIntAny("m_Switch", default=0),
 	], validate_size=False),
+]
 ```
 
 ```C++
@@ -321,4 +324,83 @@ if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_POR
 	pPickup->m_Type = m_Subtype;
 	pPickup->m_Switch = m_Number;
 }
+```
+
+## kaizocharacter@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizocharacter@m0rekz.github.io``
+
+**UUID raw**: ``81a10188-5684-3c09-a3ca-0cf037247ecf``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Flags | Kaizo Character flags (see description) |
+| Int | Real Current Weapon | Kaizo Network weapon, overrides Character Object m_Weapon |
+| Int | Tick | Update Tick (useless?) |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if kaizoversion@m0rekz.github.io has been received |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Uses information in this object for prediction and to render custom weapons in character hand |
+
+**DESCRIPTION**:
+
+This object has prediction information about the character like the real weapon he is holding, or which powerups has enabled.
+
+```Tick``` behaves like the kaizocrown@m0rekz.github.io Tick, but seems useless since this is sent on Snapshot, however [Kaizo Client](https://github.com/M0REKZ/kaizo-client) requires it to work (may change it a future client update)
+
+``validate_size=False`` was added in case a future Kaizo Network version would add new information, but the original server mod is discontinued.
+Use this object in your client if you want to display a custom texture for the active weapon or have better prediction in Kaizo-based servers (like TeeCloud).
+
+Suppoted Character Flags:
+* BLUEPORTAL = 1<<0 (Indicates if the holding portal gun shoots a blue portal instead of a orange one)
+* LASERRECOVERJUMP = 1<<1 (Indicates if character can recover the double jump by shooting himself with laser)
+
+Supported weapon IDs:
+* KZ_CUSTOM_WEAPON_PORTAL_GUN = 6 (NUM_WEAPONS)
+* KZ_CUSTOM_WEAPON_ATTRACTOR_BEAM = 7
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+
+Flags += [
+	datatypes.Flags("KAIZOCHARACTERFLAG", KaizoCharacterFlags),
+]
+
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkCharacter", "kaizocharacter@m0rekz.github.io", [
+		NetIntAny("m_Flags", default=0),
+        NetIntAny("m_RealCurrentWeapon", default=-1),
+        NetIntAny("m_Tick", default=0),
+	], validate_size=False),
+]
+```
+
+```C++
+// send on the server side
+// also make sure to verify if client supports the network object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PORTAL_ATTRACTOR)
+	{
+		CNetObj_KaizoNetworkCharacter *pKaizoNetworkCharacter = Server()->SnapNewItem<CNetObj_KaizoNetworkCharacter>(Id);
+
+		if(!pKaizoNetworkCharacter)
+			return;
+
+		pKaizoNetworkCharacter->m_Tick = Server()->Tick();
+		pKaizoNetworkCharacter->m_Flags = 0;
+		pKaizoNetworkCharacter->m_Flags |= m_BluePortal ? KAIZOCHARACTERFLAG_BLUEPORTAL : 0;
+		pKaizoNetworkCharacter->m_Flags |= (m_HasRecoverJumpLaser || g_Config.m_SvKaizoLaserRecoverJump) ? KAIZOCHARACTERFLAG_LASERRECOVERJUMP : 0;
+		pKaizoNetworkCharacter->m_RealCurrentWeapon = m_KaizoNetworkChar.m_RealCurrentWeapon;
+	}
 ```
