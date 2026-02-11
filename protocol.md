@@ -191,7 +191,7 @@ pGameDataPrediction->m_PredictionFlags = GAMEPREDICTIONFLAG_EVENT | GAMEPREDICTI
 
 **UUID domain**: ``kaizoplayerping@m0rekz.github.io``
 
-**UUID raw**: ``---``
+**UUID raw**: ``d266e386-bae3-3be4-965a-0396e1e732dd``
 
 **PAYLOAD**:
 
