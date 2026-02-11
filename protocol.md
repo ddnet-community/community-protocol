@@ -355,7 +355,7 @@ if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_POR
 
 This object has prediction information about the character like the real weapon he is holding, or which powerups has enabled.
 
-```Tick``` behaves like the kaizocrown@m0rekz.github.io Tick, but seems useless since this is sent on Snapshot, however [Kaizo Client](https://github.com/M0REKZ/kaizo-client) requires it to work (may change it a future client update)
+```Tick``` behaves like the kaizocrown@m0rekz.github.io Tick, but seems useless since this is sent on Snapshot, however [Kaizo Client](https://github.com/M0REKZ/kaizo-client) requires it to work (it may change in a future client update)
 
 ``validate_size=False`` was added in case a future Kaizo Network version would add new information, but the original server mod is discontinued.
 Use this object in your client if you want to display a custom texture for the active weapon or have better prediction in Kaizo-based servers (like TeeCloud).
