@@ -18,7 +18,7 @@
 
 | Project | Details |
 | ------- | ------- |
-| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends the crown for the player with the best time between all players online in the server, requires a NetMessage to be received indicating that the client has support for the message, so the server can send the crown |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends the crown for the player with the best time between all players online in the server, requires kaizoversion@m0rekz.github.io to be received indicating that the client has support for the message, so the server can send the crown |
 | [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a blue crown above indicated player character |
 
 **DESCRIPTION**:
@@ -40,7 +40,8 @@ Messages = [
 
 ```C++
 // send on the server side
-if(Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every tick
+// make sure the client supports the message
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_CROWNS && Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every tick
 {
   CNetMsg_Sv_KaizoNetworkCrown CrownMsg;
   CrownMsg.m_ClientId = m_pPlayer->GetCid();
@@ -68,7 +69,7 @@ if(Server()->Tick() % (Server()->TickSpeed()/5) == 0) // dont spam crown every t
 
 | Project | Details |
 | ------- | ------- |
-| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network needs this message to know they can send any other Kaizo-only message |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network needs this message to know it can send any other Kaizo-only message |
 | [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message |
 
 **DESCRIPTION**:
@@ -111,7 +112,7 @@ SendMsg(Conn, &Msg, MSGFLAG_VITAL);
 | ------- | ------- |
 | [FoxNet](https://github.com/FoxNet-DDNet/FoxNet) | Improves prediction for Fast Inputs if received with a True value |
 | [Entity Client](https://github.com/FoxNet-DDNet/Entity-Client-DDNet/) | Sends this message if FoxNet info message is received |
-| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message if FoxNet info message is received |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Sends this message |
 
 **DESCRIPTION**:
 
@@ -181,3 +182,352 @@ pGameDataPrediction->m_PredictionFlags = GAMEPREDICTIONFLAG_EVENT | GAMEPREDICTI
 
 // As the client side is somewhat fragmented, please see https://github.com/TeeworldsArchive/teeworlds/pull/40
 ```
+
+## kaizoplayerping@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizoplayerping@m0rekz.github.io``
+
+**UUID raw**: ``d266e386-bae3-3be4-965a-0396e1e732dd``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Ping | The Player's Ping, Client ID must be indicated at the Snap Object construction as indicated in the example below|
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network servers sends this message, requires kaizoversion@m0rekz.github.io to be received indicating that the client has support for the message, so the server can send the object |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a ping circle above indicated player character |
+
+**DESCRIPTION**:
+
+The server calculates ping and sends the snap object to all clients, implementing this Snap Object in new server mods is not recommended, since it uses space in the game Snapshot while this could had been implemented as a NetMessage.
+
+**EXAMPLE**:
+
+```python
+# datasrc/network.py
+Objects = [
+    # [..]
+    	NetObjectEx("KaizoNetworkPlayerPing", "kaizoplayerping@m0rekz.github.io", [
+		NetIntAny("m_Ping", default=0),
+	], validate_size=False),
+]
+```
+
+```C++
+// send on the server side
+// Kaizo Network server uses LastAckedTick to calculate ping
+// but you may want to use a different way
+// also make sure to verify if the client supports the snap object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PLAYER_PING && m_LastAckedTick != -1)
+	{
+		CNetObj_KaizoNetworkPlayerPing *pKaizoPlayerPing = Server()->SnapNewItem<CNetObj_KaizoNetworkPlayerPing>(Id);
+		if(!pKaizoPlayerPing)
+			return;
+
+		int diff = Server()->Tick() - m_LastAckedTick;
+
+		if(diff > 50)
+			diff = 50;
+
+		pKaizoPlayerPing->m_Ping = (int)(diff * 1000/Server()->TickSpeed());
+	}
+```
+
+```C++
+// read on the client side
+if(pItem->m_Type == NETOBJTYPE_KAIZONETWORKPLAYERPING)
+    {
+        const CNetObj_KaizoNetworkPlayerPing *pKaizoPlayerPing = (const CNetObj_KaizoNetworkPlayerPing *)pItem->m_pData;
+        if(!pKaizoPlayerPing)
+            return;
+        
+        int ClientId = pItem->m_Id;
+        if(ClientId < 0 || ClientId >= MAX_CLIENTS)
+            return;
+
+        m_aClients[ClientId].m_ReceivedPing = pKaizoPlayerPing->m_Ping;
+    }
+```
+
+## kaizopickup@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizopickup@m0rekz.github.io``
+
+**UUID raw**: ``5c3b5a2a-f8a1-3347-baf9-8bda6fd31833``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | X | X Position |
+| Int | Y | Y Position |
+| Int | Type | Kaizo Network Weapon ID |
+| Int | Switch | Switch Number |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if a Kaizo weapon is found on the map, if kaizoversion@m0rekz.github.io has not been received it will send a normal weapon object with a decoration (like a rotating laser) |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | If the Weapon ID is a Kaizo weapon, it will render the corresponding texture |
+
+**DESCRIPTION**:
+
+This object has information for the Kaizo weapon pickup found in the map, telling the position, type and switch ID for it.
+
+``validate_size=False`` was added in case a future Kaizo Network version would add new information, but the original server mod is discontinued.
+Use this object in your client if you want to display a custom texture for weapons in Kaizo-based servers (like TeeCloud).
+
+Supported weapon IDs:
+* KZ_CUSTOM_WEAPON_PORTAL_GUN = 6 (NUM_WEAPONS)
+* KZ_CUSTOM_WEAPON_ATTRACTOR_BEAM = 7
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkPickup", "kaizopickup@m0rekz.github.io", [
+		NetIntAny("m_X", default=0),
+        NetIntAny("m_Y", default=0),
+        NetIntAny("m_Type", default=0),
+        NetIntAny("m_Switch", default=0),
+	], validate_size=False),
+]
+```
+
+```C++
+// send on the server side
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PORTAL_ATTRACTOR)
+{
+	CNetObj_KaizoNetworkPickup *pPickup = Server()->SnapNewItem<CNetObj_KaizoNetworkPickup>(GetId());
+
+	if(!pPickup)
+		return;
+
+	pPickup->m_X = (int)m_Pos.x;
+	pPickup->m_Y = (int)m_Pos.y;
+	pPickup->m_Type = m_Subtype;
+	pPickup->m_Switch = m_Number;
+}
+```
+
+## kaizocharacter@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizocharacter@m0rekz.github.io``
+
+**UUID raw**: ``81a10188-5684-3c09-a3ca-0cf037247ecf``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | Flags | Kaizo Character flags (see description) |
+| Int | Real Current Weapon | Kaizo Network weapon, overrides Character Object m_Weapon |
+| Int | Tick | Update Tick (useless?) |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if kaizoversion@m0rekz.github.io has been received |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Uses information in this object for prediction and to render custom weapons in character hand |
+
+**DESCRIPTION**:
+
+This object has prediction information about the character like the real weapon he is holding, or which powerups has enabled.
+
+```Tick``` behaves like the kaizocrown@m0rekz.github.io Tick, but seems useless since this is sent on Snapshot, however [Kaizo Client](https://github.com/M0REKZ/kaizo-client) requires it to work (it may change in a future client update)
+
+``validate_size=False`` was added in case a future Kaizo Network version would add new information, but the original server mod is discontinued.
+Use this object in your client if you want to display a custom texture for the active weapon or have better prediction in Kaizo-based servers (like TeeCloud).
+
+Suppoted Character Flags:
+* BLUEPORTAL = 1<<0 (Indicates if the holding portal gun shoots a blue portal instead of a orange one)
+* LASERRECOVERJUMP = 1<<1 (Indicates if character can recover the double jump by shooting himself with laser)
+
+Supported weapon IDs:
+* KZ_CUSTOM_WEAPON_PORTAL_GUN = 6 (NUM_WEAPONS)
+* KZ_CUSTOM_WEAPON_ATTRACTOR_BEAM = 7
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+
+Flags += [
+	datatypes.Flags("KAIZOCHARACTERFLAG", KaizoCharacterFlags),
+]
+
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkCharacter", "kaizocharacter@m0rekz.github.io", [
+		NetIntAny("m_Flags", default=0),
+        NetIntAny("m_RealCurrentWeapon", default=-1),
+        NetIntAny("m_Tick", default=0),
+	], validate_size=False),
+]
+```
+
+```C++
+// send on the server side
+// also make sure to verify if client supports the network object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_PORTAL_ATTRACTOR)
+	{
+		CNetObj_KaizoNetworkCharacter *pKaizoNetworkCharacter = Server()->SnapNewItem<CNetObj_KaizoNetworkCharacter>(Id);
+
+		if(!pKaizoNetworkCharacter)
+			return;
+
+		pKaizoNetworkCharacter->m_Tick = Server()->Tick();
+		pKaizoNetworkCharacter->m_Flags = 0;
+		pKaizoNetworkCharacter->m_Flags |= m_BluePortal ? KAIZOCHARACTERFLAG_BLUEPORTAL : 0;
+		pKaizoNetworkCharacter->m_Flags |= (m_HasRecoverJumpLaser || g_Config.m_SvKaizoLaserRecoverJump) ? KAIZOCHARACTERFLAG_LASERRECOVERJUMP : 0;
+		pKaizoNetworkCharacter->m_RealCurrentWeapon = m_KaizoNetworkChar.m_RealCurrentWeapon;
+	}
+```
+
+## kaizoturret@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizoturret@m0rekz.github.io``
+
+**UUID raw**: ``76d92b8e-250b-3600-83d6-d68f5e9bd9c4``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | X | X Position |
+| Int | Y | Y Position |
+| Int | Type | 0 is a Normal Turret, 1 = is a Explosive Turret |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if a damage turret is found on the map, if kaizoversion@m0rekz.github.io has NOT been received it will send a normal laser with type WEAPON_LASER as replacement |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a yellow or red "turret" for the normal and explosive turret respectively |
+
+**DESCRIPTION**:
+
+A Kaizo damage turret entity, found in the map. Object indicates its position and type.
+
+Use this object in your client if you want to display a custom texture for the turrets or have better prediction in Kaizo-based servers (like TeeCloud).
+
+Implementation is similar to kaizomine@m0rekz.github.io
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkTurret", "kaizoturret@m0rekz.github.io", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntRange("m_Type", 0, 'max_int'),
+	]),
+]
+```
+
+```C++
+// send on the server side
+// also make sure to verify if client supports the network object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_TURRETS)
+	{
+		CNetObj_KaizoNetworkTurret *pTurret = static_cast<CNetObj_KaizoNetworkTurret *>(
+			Server()->SnapNewItem(NETOBJTYPE_KAIZONETWORKTURRET, GetId(), sizeof(CNetObj_KaizoNetworkTurret)));
+		if(!pTurret)
+			return;
+
+		pTurret->m_X = (int)m_Pos.x;
+		pTurret->m_Y = (int)m_Pos.y;
+		pTurret->m_Type = (m_Explosive ? 1 : 0);
+	}
+```
+
+## kaizomine@m0rekz.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Snap Object
+
+**UUID domain**: ``kaizomine@m0rekz.github.io``
+
+**UUID raw**: ``701a6e2b-05a1-3181-bef9-f05973a6454c``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | X | X Position |
+| Int | Y | Y Position |
+| Int | Type | Mine type, unused |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| [Kaizo Network](https://github.com/M0REKZ/kaizo-client/tree/discontinued-server) | Kaizo Network sends this object if a mine is found on the map, if kaizoversion@m0rekz.github.io has NOT been received it will send a WEAPON_LASER projectile |
+| [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Renders a mine in the indicated position |
+
+**DESCRIPTION**:
+
+A Kaizo Mine entity, found in the map. Object indicates its position and type, but type is unused.
+
+Use this object in your client if you want to display a custom texture for the mines or have better prediction in Kaizo-based servers (like TeeCloud).
+
+Implementation is similar to kaizoturret@m0rekz.github.io
+
+**EXAMPLE**:
+
+```Python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("KaizoNetworkMine", "kaizomine@m0rekz.github.io", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntRange("m_Type", 0, 'max_int'),
+	]),
+]
+```
+
+```C++
+// send on the server side
+// also make sure to verify if client supports the network object
+if(Server()->GetKaizoNetworkVersion(SnappingClient) >= KAIZO_NETWORK_VERSION_TURRETS)
+	{
+		CNetObj_KaizoNetworkMine *pMine = static_cast<CNetObj_KaizoNetworkMine *>(
+			Server()->SnapNewItem(NETOBJTYPE_KAIZONETWORKMINE, GetId(), sizeof(CNetObj_KaizoNetworkMine)));
+		if(!pMine)
+			return;
+
+		pMine->m_X = (int)m_Pos.x;
+		pMine->m_Y = (int)m_Pos.y;
+		pMine->m_Type = 0;
+	}
+```
+
