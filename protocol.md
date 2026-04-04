@@ -46,6 +46,61 @@ Msg.Pack(&Packer);
 Client()->SendMsgActive(&Packer, MSGFLAG_VITAL);
 ```
 
+## respawn-timer@ddnet-community.github.io
+
+**SENDER**: Server
+
+**MESSAGE TYPE**: Game Object
+
+**UUID domain**: ``respawn-timer@ddnet-community.github.io``
+
+**UUID raw**: ``idk``
+
+**PAYLOAD**:
+
+| Type | Name | Description |
+| ---- | ---- | ----------- |
+| Int | TicksLeft | The amount of ticks left before being able to respawn. Has special values 0 (can respawn now) and -1 (cannot respawn right now) |
+
+**IMPLEMENTATIONS**:
+
+| Project | Details |
+| ------- | ------- |
+| | |
+
+**DESCRIPTION**:
+
+The server sends the amount of ticks left before being able to respawn. The client can then display a message to indicate how long it has left before respawning. (perhaps under the scoreboard). It can also indicate with a special value that it already can respawn or that it cannot respawn at all.
+
+**EXAMPLE**:
+
+```python
+# datasrc/network.py
+Objects = [
+    # [..]
+	NetObjectEx("Sv_RespawnTimer", "respawn-timer@ddnet-community.github.io", [
+		NetIntAny("m_TicksLeft"),
+	]),
+]
+```
+
+```C++
+// inside of player snap
+if(m_ClientID == SnappingClient)
+	{
+		int TicksLeft = m_RespawnTick - Server()->Tick();
+
+		if (!m_pCharacter && !m_Team == TEAM_SPECTATORS))
+		{
+			CNetObj_RespawnTimer *pRespawnTimer = static_cast<CNetObj_RespawnTimer *>(Server()->SnapNewItem(NETOBJTYPE_RESPAWNTIMER, m_ClientID, sizeof(CNetObj_RespawnTimer)));
+			if(!pRespawnTimer)
+				return;
+
+			pRespawnTimer->m_TicksLeft = m_RespawnDisabled ? -1 : std::max(0, TicksLeft);
+		}
+	}
+```
+
 ## kaizocrown@m0rekz.github.io
 
 **SENDER**: Server
