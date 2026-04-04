@@ -54,7 +54,7 @@ Client()->SendMsgActive(&Packer, MSGFLAG_VITAL);
 
 **UUID domain**: ``respawn-timer@ddnet-community.github.io``
 
-**UUID raw**: ``idk``
+**UUID raw**: ``d632c25c-5d2c-33d9-a364-3d8f26a98610``
 
 **PAYLOAD**:
 
@@ -70,7 +70,7 @@ Client()->SendMsgActive(&Packer, MSGFLAG_VITAL);
 
 **DESCRIPTION**:
 
-The server sends the amount of ticks left before being able to respawn. The client can then display a message to indicate how long it has left before respawning. (perhaps under the scoreboard). It can also indicate with a special value that it already can respawn or that it cannot respawn at all.
+The server sends the amount of ticks left before being able to respawn. The client can then display a message to indicate how long it has left before respawning (perhaps under the scoreboard). The server can also indicate with a special value that the client can already respawn or that it cannot respawn at all.
 
 **EXAMPLE**:
 
@@ -87,18 +87,18 @@ Objects = [
 ```C++
 // inside of player snap
 if(m_ClientID == SnappingClient)
+{
+	int TicksLeft = m_RespawnTick - Server()->Tick();
+
+	if (!m_pCharacter && !m_Team == TEAM_SPECTATORS))
 	{
-		int TicksLeft = m_RespawnTick - Server()->Tick();
+		CNetObj_RespawnTimer *pRespawnTimer = static_cast<CNetObj_RespawnTimer *>(Server()->SnapNewItem(NETOBJTYPE_RESPAWNTIMER, m_ClientID, sizeof(CNetObj_RespawnTimer)));
+		if(!pRespawnTimer)
+			return;
 
-		if (!m_pCharacter && !m_Team == TEAM_SPECTATORS))
-		{
-			CNetObj_RespawnTimer *pRespawnTimer = static_cast<CNetObj_RespawnTimer *>(Server()->SnapNewItem(NETOBJTYPE_RESPAWNTIMER, m_ClientID, sizeof(CNetObj_RespawnTimer)));
-			if(!pRespawnTimer)
-				return;
-
-			pRespawnTimer->m_TicksLeft = m_RespawnDisabled ? -1 : std::max(0, TicksLeft);
-		}
+		pRespawnTimer->m_TicksLeft = m_RespawnDisabled ? -1 : std::max(0, TicksLeft);
 	}
+}
 ```
 
 ## kaizocrown@m0rekz.github.io
