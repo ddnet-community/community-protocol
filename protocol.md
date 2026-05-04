@@ -19,6 +19,8 @@
 | Project | Details |
 | ------- | ------- |
 | [Kaizo Client](https://github.com/M0REKZ/kaizo-client) | Client will send one or multiple messages with a language code from /languages/index.txt based on selected client language |
+| [Pointer's infclass](https://github.com/Pointer31/teeworlds-infclassR/tree/pointer31/language-msg) | Server side implementation. Simple unpack of this message can be seen in [this commit](https://github.com/Pointer31/teeworlds-infclassR/commit/a00b99b7fb5346750d4f3b23d42a89eaaa9e306c) |
+| [Duck 'n' Infclass Client](https://github.com/Pointer31/ddnet_client/tree/infclass-based-19.5-2-language-msg) | Client side implementation. Simple send of this message based on a config can be seen in [this commit](https://github.com/Pointer31/ddnet_client/commit/df8f2599bd75c48b57983b0683744cefa444669e) |
 
 **DESCRIPTION**:
 
